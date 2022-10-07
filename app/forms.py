@@ -1,6 +1,6 @@
 from flask_wtf import FlaskForm
-from wtforms import StringField, TextAreaField, PasswordField, EmailField
-from wtforms.validators import DataRequired, Length, EqualTo, Email
+from wtforms import StringField, TextAreaField, PasswordField, EmailField, RadioField
+from wtforms.validators import DataRequired, Length, EqualTo, Email, Optional
 
 
 class QuestionForm(FlaskForm):
@@ -23,3 +23,8 @@ class UserCreateForm(FlaskForm):
 class UserLoginForm(FlaskForm):
     username = StringField('사용자이름', validators=[DataRequired(), Length(min=3, max=25)])
     password = PasswordField('비밀번호', validators=[DataRequired()])
+
+
+class ExtraSearchForm(FlaskForm):
+    operator = RadioField('Label', choices=[('AND', 'AND'),('OR', 'OR'),('NOT', 'NOT')])
+    # kw2 = StringField('키워드2', validators=[Optional()], default="")

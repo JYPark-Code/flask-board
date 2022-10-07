@@ -4,18 +4,23 @@ from werkzeug.utils import redirect
 
 from .. import db
 from app.models import Question, Answer, User
-from app.forms import QuestionForm, AnswerForm
+from app.forms import QuestionForm, AnswerForm, ExtraSearchForm
 from app.views.auth_views import login_required
+from sqlalchemy import and_, or_, not_
 
 bp = Blueprint('question', __name__, url_prefix='/question')
 
 
-@bp.route('/list/')
+@bp.route('/list/', methods=('GET', 'POST'))
 def _list():
     page = request.args.get('page', type=int, default=1)
     kw = request.args.get('kw', type=str, default='')
+    
     question_list = Question.query.order_by(Question.create_date.desc())
-    if kw:
+    form = ExtraSearchForm()
+
+    # 키워드 한개 검색
+    if kw and request.method != 'POST':
         search = '%%{}%%'.format(kw)
         sub_query = db.session.query(Answer.question_id, Answer.content, User.username) \
             .join(User, Answer.user_id == User.id).subquery()
@@ -28,8 +33,58 @@ def _list():
                 sub_query.c.username.ilike(search)  # 답변작성자
                 ) \
             .distinct()
+            
+    #And, Or, Not 연산하기
+    if request.method == 'POST':
+        kw2 = request.form.get('kw2', type=str, default='')
+        if form.validate_on_submit() and kw2:
+            if form.operator.data == "AND":
+                search1 = '%%{}%%'.format(kw)
+                search2 = '%%{}%%'.format(kw2)
+                sub_query = db.session.query(Answer.question_id, Answer.content, User.username) \
+                    .join(User, Answer.user_id == User.id).subquery()
+                question_list = question_list \
+                    .join(User).outerjoin(sub_query, sub_query.c.question_id == Question.id).filter(
+                        and_(Question.subject.ilike(search1), Question.subject.ilike(search2)) |  # 질문제목
+                        and_(Question.content.ilike(search1), Question.content.ilike(search2)) |  # 질문내용
+                        and_(User.username.ilike(search1), User.username.ilike(search2)) |  # 질문작성자
+                        and_(sub_query.c.content.ilike(search1), sub_query.c.content.ilike(search2)) |  # 답변내용
+                        and_(sub_query.c.username.ilike(search1), sub_query.c.username.ilike(search2))  # 답변작성자
+                    ) \
+                .distinct()
+
+            elif form.operator.data == "OR":
+                search1 = '%%{}%%'.format(kw)
+                search2 = '%%{}%%'.format(kw2)
+                sub_query = db.session.query(Answer.question_id, Answer.content, User.username) \
+                    .join(User, Answer.user_id == User.id).subquery()
+                question_list = question_list \
+                    .join(User).outerjoin(sub_query, sub_query.c.question_id == Question.id).filter(
+                        or_(Question.subject.ilike(search1), Question.subject.ilike(search2)) |  # 질문제목
+                        or_(Question.content.ilike(search1), Question.content.ilike(search2)) |  # 질문내용
+                        or_(User.username.ilike(search1), User.username.ilike(search2)) |  # 질문작성자
+                        or_(sub_query.c.content.ilike(search1), sub_query.c.content.ilike(search2)) |  # 답변내용
+                        or_(sub_query.c.username.ilike(search1), sub_query.c.username.ilike(search2))  # 답변작성자
+                    ) \
+                .distinct()
+            
+            elif form.operator.data == "NOT":
+                search1 = '%%{}%%'.format(kw)
+                search2 = '%%{}%%'.format(kw2)
+                sub_query = db.session.query(Answer.question_id, Answer.content, User.username) \
+                    .join(User, Answer.user_id == User.id).subquery()
+                question_list = question_list \
+                    .join(User).outerjoin(sub_query, sub_query.c.question_id == Question.id).filter(
+                        and_(Question.subject.ilike(search1), Question.subject.notilike(search2)) |  # 질문제목
+                        and_(Question.content.ilike(search1), Question.content.notilike(search2)) |  # 질문내용
+                        and_(User.username.ilike(search1), User.username.notilike(search2)) |  # 질문작성자
+                        and_(sub_query.c.content.ilike(search1), sub_query.c.content.notilike(search2)) |  # 답변내용
+                        and_(sub_query.c.username.ilike(search1), sub_query.c.username.notilike(search2))  # 답변작성자
+                    ) \
+                .distinct()
+
     question_list = question_list.paginate(page, per_page=10)
-    return render_template('question/question_list.html', question_list=question_list, page=page, kw=kw)
+    return render_template('question/question_list.html', question_list=question_list, page=page, kw=kw, form=form)
 
 
 @bp.route('/detail/<int:question_id>/')
