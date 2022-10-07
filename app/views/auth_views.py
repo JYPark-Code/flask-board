@@ -9,6 +9,7 @@ from app.models import User
 
 bp = Blueprint('auth', __name__, url_prefix='/auth')
 
+
 def login_required(view):
     @functools.wraps(view)
     def wrapped_view(*args, **kwargs):
