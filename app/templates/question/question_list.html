@@ -21,26 +21,25 @@
         {% if kw %}
         <div class="col-8"></div>
         <div class="col-4 ml-auto">
-            <form action="" method="POST">
-                {{ form.csrf_token }}
-                {% for subfield in form.operator %}
-                <tr>
-                    <td>{{ subfield }}</td>
-                    <td>{{ subfield.label }}</td>
-                </tr>
-                {% endfor %}
-                <div class="input-group">
-                    <input type="text" name="kw2" id="search_kw2" placeholder="추가 검색어" class="form-control" value="{{ kw2 or '' }}" value onkeypress="return search(event)"/>
-                    <div class="input-group-append">
-                        <button class="btn btn-outline-secondary" type="submit" id="btn_search2" name="extra_search">
+            {% for subfield in form.operator %}
+            <tr>
+                <td>{{ subfield }} {% if operator == subfield %} checked {% endif %}</td>
+                <td>{{ subfield.label }}</td>
+            </tr>
+            {% endfor %}
+
+            <div class="input-group">
+                <input type="text" name="kw2" id="search_kw2" placeholder="추가 검색어" class="form-control" value="{{ kw2 or '' }}" value onkeypress="return search_included(event)">
+                <div class="input-group-append">
+                    <button class="btn btn-outline-secondary" type="button" id="btn_search2">
                             <i class="fas fa-search"></i>
-                        </button>
-                    </div>
+                    </input>
                 </div>
-            </form>
+            </div>
         </div>
-        {% endif %}
+        {% endif %}     
     </div>
+
     <table class="table">
         <thead>
         <tr class="text-center table-dark">
@@ -53,7 +52,7 @@
         <tbody>
         <!-- 질문 목록 -->
         {% if question_list %}
-        {% if kw %}
+        {% if kw or kw2 %}
         <h5 class="border-bottom my-3 py-2"> 검색결과 총 <strong>{{ question_list.total }}</strong>개</h5>
         {% endif %}
         {% for question in question_list.items %}
@@ -120,6 +119,8 @@
     <!-- 페이징처리 끝 -->
     <form id="searchForm" method="get" action="{{ url_for('question._list') }}">
         <input type="hidden" id="kw" name="kw" value="{{ kw or '' }}">
+        <input type="hidden" id="operator" name="operator" value="{{ operator or '' }}" >
+        <input type="hidden" id="kw2" name="kw2" value="{{ kw2 or '' }}">
         <input type="hidden" id="page" name="page" value="{{ page }}">
     </form>
 
@@ -127,6 +128,9 @@
 {% endblock %}
 {% block script %}
 <script type='text/javascript'>
+
+const radioButtons = document.querySelectorAll('input[name="operator"]')
+
 function search(e) {
     if (e.keyCode == 13) {
         document.getElementById('kw').value = document.getElementById('search_kw').value;
@@ -134,6 +138,21 @@ function search(e) {
         document.getElementById('searchForm').submit();
     }
 }
+
+function search_included(e) {
+    if (e.keyCode == 13) {
+        document.getElementById('kw').value = document.getElementById('search_kw').value;
+        document.getElementById('kw2').value = document.getElementById('search_kw2').value;
+        for (const radioButton of radioButtons) {
+                    if (radioButton.checked) {
+                        document.getElementById('operator').value = radioButton.value;
+                    }
+                }
+        document.getElementById('page').value = 1;  // 검색버튼을 클릭할 경우 1페이지부터 조회한다.
+        document.getElementById('searchForm').submit();
+    }
+}
+
 
 const page_elements = document.getElementsByClassName("page-link");
 Array.from(page_elements).forEach(function(element) {
@@ -143,8 +162,22 @@ Array.from(page_elements).forEach(function(element) {
     });
 });
 const btn_search = document.getElementById("btn_search");
+const btn_search2 = document.getElementById("btn_search2");
+
 btn_search.addEventListener('click', function() {
     document.getElementById('kw').value = document.getElementById('search_kw').value;
+    document.getElementById('page').value = 1;  // 검색버튼을 클릭할 경우 1페이지부터 조회한다.
+    document.getElementById('searchForm').submit();
+});
+
+btn_search2.addEventListener('click', function() {
+    document.getElementById('kw').value = document.getElementById('search_kw').value;
+    document.getElementById('kw2').value = document.getElementById('search_kw2').value;
+    for (const radioButton of radioButtons) {
+                if (radioButton.checked) {
+                    document.getElementById('operator').value = radioButton.value;
+                }
+            }
     document.getElementById('page').value = 1;  // 검색버튼을 클릭할 경우 1페이지부터 조회한다.
     document.getElementById('searchForm').submit();
 });
