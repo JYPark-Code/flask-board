@@ -89,9 +89,9 @@ def _list():
                 ).filter(
                     ~Question.subject.contains(search2),    # 질문제목
                     ~Question.content.contains(search2), # 질문내용
-                    # ~User.username.ilike(search2),  # 질문작성자
-                    # ~sub_query.c.content.ilike(search2), # 답변내용
-                    # ~sub_query.c.username.ilike(search2)  # 답변작성자
+                    # ~User.username.contains(search2),  # 질문작성자
+                    # ~sub_query.c.content.contains(search2), # 답변내용
+                    # ~sub_query.c.username.contains(search2)  # 답변작성자
                 ) \
             .distinct()
 
