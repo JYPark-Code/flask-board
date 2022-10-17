@@ -43,7 +43,6 @@ def _list():
     # if request.method == 'POST':
         # kw2 = request.form.get('kw2', type=str, default='')
     if kw2:
-        print(operator)
         if operator == "AND":
             search1 = '%%{}%%'.format(kw)
             search2 = '%%{}%%'.format(kw2)
@@ -76,16 +75,23 @@ def _list():
         
         elif operator == "NOT":
             search1 = '%%{}%%'.format(kw)
-            search2 = '%%{}%%'.format(kw2)
+            # search2 = '%%{}%%'.format(kw2)
+            search2 = str(kw2)
             sub_query = db.session.query(Answer.question_id, Answer.content, User.username) \
                 .join(User, Answer.user_id == User.id).subquery()
             question_list = question_list \
                 .join(User).outerjoin(sub_query, sub_query.c.question_id == Question.id).filter(
-                    and_(Question.subject.ilike(search1), Question.subject.notilike(search2)) |  # 질문제목
-                    and_(Question.content.ilike(search1), Question.content.notilike(search2)) |  # 질문내용
-                    and_(User.username.ilike(search1), User.username.notilike(search2)) |  # 질문작성자
-                    and_(sub_query.c.content.ilike(search1), sub_query.c.content.notilike(search2)) |  # 답변내용
-                    and_(sub_query.c.username.ilike(search1), sub_query.c.username.notilike(search2))  # 답변작성자
+                    Question.subject.ilike(search1) |  # 질문제목
+                    Question.content.ilike(search1) |  # 질문내용
+                    User.username.ilike(search1) |  # 질문작성자
+                    sub_query.c.content.ilike(search1) |  # 답변내용
+                    sub_query.c.username.ilike(search1)  # 답변작성자
+                ).filter(
+                    ~Question.subject.contains(search2),    # 질문제목
+                    ~Question.content.contains(search2), # 질문내용
+                    # ~User.username.ilike(search2),  # 질문작성자
+                    # ~sub_query.c.content.ilike(search2), # 답변내용
+                    # ~sub_query.c.username.ilike(search2)  # 답변작성자
                 ) \
             .distinct()
 
