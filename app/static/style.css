@@ -32,3 +32,22 @@ a:active {text-decoration:none}
 tr:hover {
     background-image: linear-gradient(rgba(0, 0, 0, 0.1),rgba(0, 0, 0, 0.1));
   }
+
+
+th, td {
+
+    font-size: 12px;
+ 
+}
+
+tr {
+    font-size: 10px;
+}
+
+.pagination{
+    font-size: 10px;
+}
+
+.page-link{
+    font-size: 10px;
+}
