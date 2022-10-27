@@ -90,7 +90,7 @@ def _list():
                     ~Question.subject.contains(search2),    # 질문제목
                     ~Question.content.contains(search2), # 질문내용
                     # ~User.username.contains(search2),  # 질문작성자
-                    # ~sub_query.c.content.contains(search2), # 답변내용
+                    ~sub_query.c.content.contains(search2), # 답변내용
                     # ~sub_query.c.username.contains(search2)  # 답변작성자
                 ) \
             .distinct()
